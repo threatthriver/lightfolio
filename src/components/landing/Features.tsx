@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { FileText, Database, CalendarDays, Layers, Users, Lock } from 'lucide-react';
 
 interface FeatureCardProps {
@@ -86,7 +86,6 @@ const Features = () => {
           </div>
           
           <div className="relative aspect-video bg-accent/30 rounded-lg">
-            {/* App interface mockup */}
             <div className="absolute inset-0 flex flex-col p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-8 h-8 bg-primary/20 rounded flex items-center justify-center">
@@ -107,7 +106,6 @@ const Features = () => {
                 <div className="col-span-1 p-2 bg-background border border-border rounded">Priority</div>
                 <div className="col-span-1 p-2 bg-background border border-border rounded">Due Date</div>
                 
-                {/* Table rows */}
                 {[1, 2, 3, 4].map((row) => (
                   <React.Fragment key={row}>
                     <div className="col-span-1 p-2 bg-card border border-border/50 rounded">Task {row}</div>

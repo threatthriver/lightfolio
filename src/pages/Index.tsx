@@ -3,6 +3,7 @@ import Header from '@/components/landing/Header';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
 import Footer from '@/components/landing/Footer';
+import { Button } from '@/components/ui/button';
 import { AuthProvider } from '@/context/AuthContext';
 
 const Index = () => {

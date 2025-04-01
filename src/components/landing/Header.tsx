@@ -52,7 +52,10 @@ const Header = () => {
         {/* Auth buttons */}
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
-            <Button as={Link} to="/workspace" variant="default">
+            <Button 
+              variant="default"
+              onClick={() => window.location.href = "/workspace"}
+            >
               Go to Workspace
             </Button>
           ) : (
@@ -102,10 +105,11 @@ const Header = () => {
           
           {user ? (
             <Button 
-              as={Link} 
-              to="/workspace" 
               className="w-full"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => {
+                window.location.href = "/workspace";
+                setMobileMenuOpen(false);
+              }}
             >
               Go to Workspace
             </Button>
