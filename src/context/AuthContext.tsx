@@ -12,6 +12,7 @@ interface AuthContextProps {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             id: currentSession.user.id,
             name: currentSession.user.user_metadata.name || currentSession.user.email?.split('@')[0] || '',
             email: currentSession.user.email || '',
+            avatar: currentSession.user.user_metadata.avatar_url,
           });
         } else {
           setUser(null);
@@ -50,6 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: currentSession.user.id,
           name: currentSession.user.user_metadata.name || currentSession.user.email?.split('@')[0] || '',
           email: currentSession.user.email || '',
+          avatar: currentSession.user.user_metadata.avatar_url,
         });
       }
       setIsLoading(false);
@@ -102,6 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           data: {
             name,
           },
+          emailRedirectTo: window.location.origin,
         },
       });
       
@@ -155,8 +159,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        console.error("Reset password error:", error.message);
+        throw error;
+      }
+      
+      toast({
+        title: "Password reset email sent",
+        description: "Check your email for the password reset link.",
+      });
+    } catch (error) {
+      const authError = error as AuthError;
+      console.error("Reset password error caught:", authError.message);
+      toast({
+        title: "Password reset failed",
+        description: authError.message || "Please check your email and try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, session, isLoading, login, signup, logout, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

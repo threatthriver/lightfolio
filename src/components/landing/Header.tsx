@@ -4,12 +4,20 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/auth/AuthModal';
 import { useAuth } from '@/context/AuthContext';
-import { Menu, X, Loader2 } from 'lucide-react';
+import { Menu, X, Loader2, User } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 const Header = () => {
   const { user, logout, isLoading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'reset-password'>('login');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,7 +27,7 @@ const Header = () => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const handleAuthClick = (mode: 'login' | 'signup') => {
+  const handleAuthClick = (mode: 'login' | 'signup' | 'reset-password') => {
     setAuthMode(mode);
     setShowAuthModal(true);
   };
@@ -33,6 +41,11 @@ const Header = () => {
 
   const goToWorkspace = () => {
     navigate('/workspace');
+  };
+
+  const getUserInitials = () => {
+    if (!user?.name) return '?';
+    return user.name.charAt(0).toUpperCase();
   };
 
   return (
@@ -75,20 +88,46 @@ const Header = () => {
               Loading...
             </Button>
           ) : user ? (
-            <>
+            <div className="flex items-center space-x-4">
               <Button 
                 variant="ghost"
-                onClick={handleLogout}
-              >
-                Log out
-              </Button>
-              <Button 
-                variant="default"
                 onClick={goToWorkspace}
               >
-                Go to Workspace
+                Workspace
               </Button>
-            </>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={goToWorkspace}>
+                    Workspace
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/settings')}>
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <>
               <Button
@@ -141,6 +180,27 @@ const Header = () => {
             </Button>
           ) : user ? (
             <div className="flex flex-col space-y-2">
+              <div className="flex items-center p-2 bg-accent rounded-md mb-2">
+                <Avatar className="h-8 w-8 mr-2">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              </div>
+              <Button 
+                className="w-full"
+                onClick={() => {
+                  goToWorkspace();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Go to Workspace
+              </Button>
               <Button 
                 variant="outline"
                 className="w-full"
@@ -150,15 +210,6 @@ const Header = () => {
                 }}
               >
                 Log out
-              </Button>
-              <Button 
-                className="w-full"
-                onClick={() => {
-                  goToWorkspace();
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Go to Workspace
               </Button>
             </div>
           ) : (
