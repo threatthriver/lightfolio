@@ -1,13 +1,14 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -21,9 +22,17 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const { login, signup, isLoading } = useAuth();
+  const { login, signup, isLoading, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // If user is already logged in, close the modal
+  useEffect(() => {
+    if (user) {
+      onClose();
+      navigate('/workspace');
+    }
+  }, [user, navigate, onClose]);
 
   const resetForm = () => {
     setName('');
@@ -32,24 +41,45 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
     setError(null);
   };
 
+  const validateForm = () => {
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    
+    if (!password || password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return false;
+    }
+    
+    if (mode === 'signup' && !name) {
+      setError('Please enter your name');
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     
+    if (!validateForm()) return;
+    
     try {
       if (mode === 'login') {
         await login(email, password);
-        navigate('/workspace');
+        // No need to navigate here - useEffect will handle it when user is set
       } else {
         await signup(name, email, password);
-        // After successful signup, we automatically get logged in due to Supabase behavior
-        navigate('/workspace');
+        toast({
+          title: "Verification email sent",
+          description: "Please check your email to verify your account.",
+        });
       }
-      onClose();
-      resetForm();
     } catch (error) {
       console.error('Auth error:', error);
-      // The toast is already shown in the auth context
+      // Error is already handled in auth context with toast
     }
   };
 
@@ -82,6 +112,8 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
                 required
+                disabled={isLoading}
+                autoComplete="name"
               />
             </div>
           )}
@@ -95,6 +127,8 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
               required
+              disabled={isLoading}
+              autoComplete={mode === 'login' ? 'username' : 'email'}
             />
           </div>
           
@@ -108,11 +142,16 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
               placeholder="••••••••"
               required
               minLength={6}
+              disabled={isLoading}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             />
           </div>
           
           {error && (
-            <div className="text-sm text-destructive">{error}</div>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="ml-2">{error}</AlertDescription>
+            </Alert>
           )}
           
           <Button type="submit" className="w-full" disabled={isLoading}>
@@ -133,6 +172,7 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
             type="button"
             onClick={toggleMode}
             className="ml-1 text-primary hover:underline focus:outline-none"
+            disabled={isLoading}
           >
             {mode === 'login' ? 'Sign up' : 'Log in'}
           </button>

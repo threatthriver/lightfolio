@@ -1,17 +1,23 @@
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/auth/AuthModal';
 import { useAuth } from '@/context/AuthContext';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Loader2 } from 'lucide-react';
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Close mobile menu when changing routes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleAuthClick = (mode: 'login' | 'signup') => {
     setAuthMode(mode);
@@ -20,7 +26,9 @@ const Header = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    if (location.pathname === '/workspace') {
+      navigate('/');
+    }
   };
 
   const goToWorkspace = () => {
@@ -61,7 +69,12 @@ const Header = () => {
 
         {/* Auth buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          {user ? (
+          {isLoading ? (
+            <Button variant="ghost" disabled>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading...
+            </Button>
+          ) : user ? (
             <>
               <Button 
                 variant="ghost"
@@ -121,7 +134,12 @@ const Header = () => {
             </a>
           </nav>
           
-          {user ? (
+          {isLoading ? (
+            <Button disabled className="w-full">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading...
+            </Button>
+          ) : user ? (
             <div className="flex flex-col space-y-2">
               <Button 
                 variant="outline"
