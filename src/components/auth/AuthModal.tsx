@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,31 +20,51 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const { login, signup, isLoading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     try {
       if (mode === 'login') {
         await login(email, password);
+        navigate('/workspace');
       } else {
         await signup(name, email, password);
+        // After successful signup, we automatically get logged in due to Supabase behavior
+        navigate('/workspace');
       }
       onClose();
+      resetForm();
     } catch (error) {
       console.error('Auth error:', error);
-      // Error is already handled in the auth context with toast notifications
+      // The toast is already shown in the auth context
     }
   };
 
   const toggleMode = () => {
     setMode(mode === 'login' ? 'signup' : 'login');
+    resetForm();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        onClose();
+        resetForm();
+      }
+    }}>
       <DialogContent className="sm:max-w-md animate-scale">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
@@ -86,8 +107,13 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
+              minLength={6}
             />
           </div>
+          
+          {error && (
+            <div className="text-sm text-destructive">{error}</div>
+          )}
           
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (

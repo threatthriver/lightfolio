@@ -1,20 +1,30 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AuthModal from '@/components/auth/AuthModal';
 import { useAuth } from '@/context/AuthContext';
 import { Menu, X } from 'lucide-react';
 
 const Header = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleAuthClick = (mode: 'login' | 'signup') => {
     setAuthMode(mode);
     setShowAuthModal(true);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
+  const goToWorkspace = () => {
+    navigate('/workspace');
   };
 
   return (
@@ -52,12 +62,20 @@ const Header = () => {
         {/* Auth buttons */}
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
-            <Button 
-              variant="default"
-              onClick={() => window.location.href = "/workspace"}
-            >
-              Go to Workspace
-            </Button>
+            <>
+              <Button 
+                variant="ghost"
+                onClick={handleLogout}
+              >
+                Log out
+              </Button>
+              <Button 
+                variant="default"
+                onClick={goToWorkspace}
+              >
+                Go to Workspace
+              </Button>
+            </>
           ) : (
             <>
               <Button
@@ -104,15 +122,27 @@ const Header = () => {
           </nav>
           
           {user ? (
-            <Button 
-              className="w-full"
-              onClick={() => {
-                window.location.href = "/workspace";
-                setMobileMenuOpen(false);
-              }}
-            >
-              Go to Workspace
-            </Button>
+            <div className="flex flex-col space-y-2">
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  handleLogout();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Log out
+              </Button>
+              <Button 
+                className="w-full"
+                onClick={() => {
+                  goToWorkspace();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Go to Workspace
+              </Button>
+            </div>
           ) : (
             <div className="flex flex-col space-y-2">
               <Button
