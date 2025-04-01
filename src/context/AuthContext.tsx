@@ -26,9 +26,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.id);
         setSession(currentSession);
+        
         if (currentSession?.user) {
           setUser({
             id: currentSession.user.id,
@@ -36,9 +37,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             email: currentSession.user.email || '',
             avatar: currentSession.user.user_metadata.avatar_url,
           });
+          console.log("User set in auth state change:", currentSession.user.id);
         } else {
           setUser(null);
+          console.log("User cleared in auth state change");
         }
+        
         setIsLoading(false);
       }
     );
@@ -47,6 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log("Initial session check:", currentSession?.user?.id);
       setSession(currentSession);
+      
       if (currentSession?.user) {
         setUser({
           id: currentSession.user.id,
@@ -54,7 +59,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: currentSession.user.email || '',
           avatar: currentSession.user.user_metadata.avatar_url,
         });
+        console.log("User set in initial session:", currentSession.user.id);
+      } else {
+        console.log("No initial session found");
       }
+      
       setIsLoading(false);
     });
 

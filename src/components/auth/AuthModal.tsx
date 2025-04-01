@@ -28,9 +28,10 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // If user is already logged in, close the modal
+  // If user is already logged in, close the modal and navigate to workspace
   useEffect(() => {
     if (user) {
+      console.log("User detected in AuthModal, navigating to workspace:", user);
       onClose();
       navigate('/workspace');
     }
@@ -84,7 +85,8 @@ const AuthModal = ({ isOpen, onClose, initialMode }: AuthModalProps) => {
     try {
       if (mode === 'login') {
         await login(email, password);
-        // No need to navigate here - useEffect will handle it when user is set
+        console.log("Login successful in handleSubmit, should navigate soon...");
+        // No manual navigation needed here - useEffect will handle it when user is set
       } else if (mode === 'signup') {
         await signup(name, email, password);
         toast({

@@ -1,14 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/workspace/Sidebar';
 import PageEditor from '@/components/workspace/PageEditor';
 import CollectionView from '@/components/workspace/CollectionView';
-import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Page, Collection, CollectionItem } from '@/lib/types';
 
-// Mock data for initial state
 const mockPages: Page[] = [
   {
     id: 'page-1',
@@ -76,44 +74,57 @@ const mockCollectionItems: CollectionItem[] = [
   },
 ];
 
-// Types for content view
 type ContentType = 'page' | 'collection';
 type ContentView = {
   type: ContentType;
   id: string;
 };
 
-const WorkspaceContent = () => {
-  const { user } = useAuth();
+const Workspace = () => {
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // State
   const [pages, setPages] = useState<Page[]>(mockPages);
   const [collections, setCollections] = useState<Collection[]>([mockCollection]);
   const [collectionItems, setCollectionItems] = useState<CollectionItem[]>(mockCollectionItems);
   const [currentView, setCurrentView] = useState<ContentView>({ type: 'page', id: 'page-1' });
   
-  // Check if user is logged in
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
+      console.log("No user detected in Workspace, redirecting to home");
       navigate('/');
       toast({
         title: "Authentication required",
         description: "Please log in to access the workspace",
         variant: "destructive",
       });
+    } else if (user) {
+      console.log("User authenticated in Workspace:", user.id);
     }
-  }, [user, navigate, toast]);
+  }, [user, isLoading, navigate, toast]);
   
-  // Current content being viewed
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+          <p className="text-lg text-muted-foreground">Loading your workspace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user && !isLoading) {
+    return null;
+  }
+  
   const currentPage = pages.find(page => page.id === currentView.id);
   const currentCollection = collections.find(col => col.id === currentView.id);
   const currentCollectionItems = collectionItems.filter(
     item => item.collectionId === currentView.id
   );
   
-  // Handlers
   const handleCreatePage = (pageData: Partial<Page>) => {
     const newPage: Page = {
       id: `page-${Date.now()}`,
@@ -192,7 +203,6 @@ const WorkspaceContent = () => {
     }));
   };
   
-  // Sidebar items combine pages and collections
   const sidebarItems = [...pages];
   
   return (
@@ -201,7 +211,6 @@ const WorkspaceContent = () => {
         pages={sidebarItems}
         onCreatePage={handleCreatePage}
         onSelectPage={(id) => {
-          // Determine if this is a page or collection
           const page = pages.find(p => p.id === id);
           if (page) {
             setCurrentView({ type: 'page', id });
@@ -233,11 +242,5 @@ const WorkspaceContent = () => {
     </div>
   );
 };
-
-const Workspace = () => (
-  <AuthProvider>
-    <WorkspaceContent />
-  </AuthProvider>
-);
 
 export default Workspace;
